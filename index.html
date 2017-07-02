@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>jQuery UI Dialog - Modal form</title>
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="https://jqueryui.com/resources/demos/style.css">
+  <style>
+    label, input { display:block; }
+    input.text { margin-bottom:12px; width:95%; padding: .4em; }
+    fieldset { padding:0; border:0; margin-top:25px; }
+    h1 { font-size: 1.2em; margin: .6em 0; }
+    div#users-contain { width: 350px; margin: 20px 0; }
+    div#users-contain table { margin: 1em 0; border-collapse: collapse; width: 100%; }
+    div#users-contain table td, div#users-contain table th { border: 1px solid #eee; padding: .6em 10px; text-align: left; }
+    .ui-dialog .ui-state-error { padding: .3em; }
+    .validateTips { border: 1px solid transparent; padding: 0.3em; }
+  </style>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  <!--<script src="https://code.jquery.com/jquery-1.12.4.js"></script>-->
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  <script src="https://unpkg.com/vue"></script>
+  <script src="https://cdn.jsdelivr.net/lodash/4.17.4/lodash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/vee-validate/2.0.0-rc.3/vee-validate.js"></script>
+  <script>
+  $( function() {
+    var dialog, form,
+ 
+      // From http://www.whatwg.org/specs/web-apps/current-work/multipage/states-of-the-type-attribute.html#e-mail-state-%28type=email%29
+      emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
+      name = $( "#name" ),
+      email = $( "#email" ),
+      password = $( "#password" ),
+      allFields = $( [] ).add( name ).add( email ).add( password ),
+      tips = $( ".validateTips" );
+ 
+    function updateTips( t ) {
+      tips
+        .text( t )
+        .addClass( "ui-state-highlight" );
+      setTimeout(function() {
+        tips.removeClass( "ui-state-highlight", 1500 );
+      }, 500 );
+    }
+ 
+    function checkLength( o, n, min, max ) {
+      if ( o.val().length > max || o.val().length < min ) {
+        o.addClass( "ui-state-error" );
+        updateTips( "Length of " + n + " must be between " +
+          min + " and " + max + "." );
+        return false;
+      } else {
+        return true;
+      }
+    }
+ 
+    function checkRegexp( o, regexp, n ) {
+      if ( !( regexp.test( o.val() ) ) ) {
+        o.addClass( "ui-state-error" );
+        updateTips( n );
+        return false;
+      } else {
+        return true;
+      }
+    }
+ 
+    function addUser() {
+      var valid = true;
+      allFields.removeClass( "ui-state-error" );
+ 
+      valid = valid && checkLength( name, "username", 3, 16 );
+      valid = valid && checkLength( email, "email", 6, 80 );
+      valid = valid && checkLength( password, "password", 5, 16 );
+ 
+      valid = valid && checkRegexp( name, /^[a-z]([0-9a-z_\s])+$/i, "Username may consist of a-z, 0-9, underscores, spaces and must begin with a letter." );
+      valid = valid && checkRegexp( email, emailRegex, "eg. ui@jquery.com" );
+      valid = valid && checkRegexp( password, /^([0-9a-zA-Z])+$/, "Password field only allow : a-z 0-9" );
+ 
+      if ( valid ) {
+        $( "#users tbody" ).append( "<tr>" +
+          "<td>" + name.val() + "</td>" +
+          "<td>" + email.val() + "</td>" +
+          "<td>" + password.val() + "</td>" +
+        "</tr>" );
+        dialog.dialog( "close" );
+      }
+      return valid;
+    }
+ 
+    dialog = $( "#dialog-form" ).dialog({
+      autoOpen: false,
+      height: 400,
+      width: 350,
+      modal: true,
+      buttons: {
+        "Create an account": addUser,
+        Cancel: function() {
+          dialog.dialog( "close" );
+        }
+      },
+      close: function() {
+        form[ 0 ].reset();
+        allFields.removeClass( "ui-state-error" );
+      }
+    });
+ 
+    form = dialog.find( "form" ).on( "submit", function( event ) {
+      event.preventDefault();
+      addUser();
+    });
+ 
+    $( "#create-user" ).button().on( "click", function() {
+      dialog.dialog( "open" );
+    });
+  } );
+  </script>
+</head>
+<body>
+ <h2 id="top">Top of page!</h2>
+
+<div id="dialog-form" title="Create new user">
+  <p class="validateTips">All form fields are required.</p>
+ 
+  <form>
+    <fieldset>
+      <label for="name">Name</label>
+      <input type="text" name="name" id="name" value="Jane Smith" class="text ui-widget-content ui-corner-all">
+      <label for="email">Email</label>
+      <input type="text" name="email" id="email" value="jane@smith.com" class="text ui-widget-content ui-corner-all">
+      <label for="password">Password</label>
+      <input type="password" name="password" id="password" value="xxxxxxx" class="text ui-widget-content ui-corner-all">
+ 
+      <!-- Allow form submission with keyboard without duplicating the dialog button -->
+      <input type="submit" tabindex="-1" style="position:absolute; top:-1000px">
+    </fieldset>
+  </form>
+</div>
+ 
+ 
+<div id="users-contain" class="ui-widget">
+  <h1>Existing Users:</h1>
+  <table id="users" class="ui-widget ui-widget-content">
+    <thead>
+      <tr class="ui-widget-header ">
+        <th>Name</th>
+        <th>Email</th>
+        <th>Password</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>John Doe</td>
+        <td>john.doe@example.com</td>
+        <td>johndoe1</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<button id="create-user">Create new user</button>
+ <div class="container">
+  <h2>Modal Example</h2>
+  <!-- Trigger the modal with a button -->
+  <button type="button" class="btn btn-info btn-lg" data-toggle="modal" data-target="#myModal">Open Modal</button>
+
+  <!-- Modal -->
+  <div class="modal fade" id="myModal" role="dialog">
+    <div class="modal-dialog">
+    
+      <!-- Modal content-->
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal">&times;</button>
+          <h4 class="modal-title">Modal Header</h4>
+        </div>
+        <div class="modal-body">
+          <p>Some text in the modal.</p>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+  
+</div>
+
+<!--vue.js code-->
+<hr>
+
+<div id="sudoku-demo" class="demo">
+    <div class="demo-container">
+
+    
+  <h1>Lazy Sudoku</h1>
+  <p>Keep hitting the shuffle button until you win.</p>
+
+  <button @click="shuffle">
+    Shuffle
+  </button>
+  <transition-group name="cell" tag="div" class="containerv">
+    <div v-for="cell in cells" :key="cell.id" class="cell">
+      {{ cell.number}}
+    </div>
+  </transition-group>
+  </div>
+</div>
+
+<hr>
+<h1>Vue.js with Bootstrap Modal</h1>
+<hr>
+<div id="app2" v-bind:class=" { 'modal-open': show }">
+  <button class="btn btn-primary" v-on:click="toggle">
+    Open
+  </button>
+  <div class="modal fade in" tabindex="-1" v-bind:class="{ in: show }"
+    v-bind:style="modalStyle"  role="dialog">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-body">
+          <p>Vue-powered modal!</p>
+          <label class="label" for="email">Email</label>
+            <p :class="{ 'control': true }">
+                <input v-validate="'required|email'" :class="{'input': true, 'is-danger': errors.has('email') }" name="email" type="text" placeholder="Email">
+                <span v-show="errors.has('email')" class="help is-danger">{{ errors.first('email') }}</span>
+            </p>
+        </div>
+      <div class="modal-footer">
+        <button class="btn" v-on:click="toggle">Close</button>
+      </div>
+    </div>
+  </div>
+  </div>
+</div>
+<hr>
+<h1>Vue.js with Bootstrap Tabs</h1>
+<hr>
+<div id="tabs">
+  <ul class="nav nav-tabs">
+    <li v-bind:class="{ active: tab === 1}" v-on:click="tab = 1">
+      <a>Tab 1</a>
+    </li>
+    <li v-bind:class="{ active: tab === 2}" v-on:click="tab = 2">
+      <a>Tab 2</a>
+    </li>
+  </ul>
+  <div class="tab-content">
+    <div class="tab-pane" v-bind:class="{ active: tab === 1}">
+      <div class="jumbotron">
+        <h1>Hello, tab one!</h1>
+        <p>We’ll start simple with tabs. For every tab, there must be an accompanying tab pane. The showing/hiding is achieved by adding/removing a class “active” to both the tab and the tab pane, so that’s what Vue will need to handle.</p>
+        <p><a href="#top">Go to top</a></p>
+      </div>
+</div>
+    <div class="tab-pane" v-bind:class="{ active: tab === 2}">
+      <div class="jumbotron">
+        <h1>Two!</h1>
+        <p><pre name="3d6b" id="3d6b" class="graf graf--pre graf-after--p">&lt;div id="tabs"&gt;<br>  &lt;ul class="nav nav-tabs"&gt;<br>    &lt;li <strong class="markup--strong markup--pre-strong">v-bind:class="{ active: tab === 1}"</strong>&gt;&lt;a&gt;Tab 1&lt;/a&gt;&lt;/li&gt;<br>    &lt;li <strong class="markup--strong markup--pre-strong">v-bind:class="{ active: tab === 2}"</strong>&gt;&lt;a&gt;Tab 2&lt;/a&gt;&lt;/li&gt;<br>  &lt;/ul&gt;<br>  &lt;div class="tab-content"&gt;<br>    &lt;div class="tab-pane" <strong class="markup--strong markup--pre-strong">v-bind:class="{ active: tab === 1}"</strong>&gt;<br>      Pane 1&lt;/div&gt;<br>    &lt;div class="tab-pane" <strong class="markup--strong markup--pre-strong">v-bind:class="{ active: tab === 2}"</strong>&gt;<br>      Pane 2&lt;/div&gt;<br>  &lt;/div&gt;<br>&lt;/div&gt;</pre></p>
+        <p><a href="#top">Go to top</a></p>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="end-row">
+    <div class="jumbotron">
+  <h1>Hello, end of the page!</h1>
+  <p>...</p>
+  <p><a href="#top">Go to top</a></p>
+</div>
+</div>
+<script>
+    new Vue({
+ el: '#tabs',
+ data: { 
+   // Tab 1 is selected by default
+   tab: 1 
+ }
+});
+////////////////////////////////////// new vue instance ///////////////////
+Vue.use(VeeValidate); // good to go. 
+new Vue({
+  el: '#app2',
+  data: { 
+    show: false 
+  },
+  methods: {
+    toggle() { this.show = !this.show; }
+  },
+  computed: {
+    modalStyle() {
+      return this.show ? 
+        { 'padding-left': '0px;', display: 'block' } : {};
+    }
+  }
+});
+</script>
+<script>
+    
+    new Vue({
+  el: '#sudoku-demo',
+  data: {
+    cells: Array.apply(null, { length: 81 })
+    	.map(function (_, index) { 
+      	return {
+        	id: index,
+        	number: index % 9 + 1
+        }
+      })
+  },
+  methods: {
+  	shuffle: function () {
+    	this.cells = _.shuffle(this.cells)
+    },
+    acell:function(cell){
+      //  debugger;
+        console.log("cell: " + cell.number + "  index= " + cell.id)
+    }
+  }
+})
+</script>
+<style>
+    .demo { display: flex; justify-content: center; align-content: center;}
+    .containerv {
+  display: flex;
+  flex-wrap: wrap;
+  /*width: 238px;*/
+   width: 444px;
+  margin-top: 10px;
+  background: blue;
+}
+.cell {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 50px;
+  height: 50px;
+  border: 1px solid #aaa;
+  margin-right: -1px;
+  margin-bottom: -1px;
+  background: white;
+}
+.cell:nth-child(3n) {
+  margin-right: 0;
+}
+.cell:nth-child(27n) {
+  margin-bottom: 0;
+}
+.cell-move {
+  transition: transform 2s;
+}
+.graf--pre, .markup--blockquote-code, .markup--li-code, .markup--p-code {
+    font-family: Menlo,Monaco,"Courier New",Courier,monospace;
+    font-size: 16px;
+}
+</style>
+</body>
+</html>

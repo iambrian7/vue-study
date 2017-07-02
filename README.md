@@ -1,0 +1,1 @@
+A workshop for vue.js objects
